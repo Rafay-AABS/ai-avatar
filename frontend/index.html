@@ -3,74 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Avatar Chat</title>
-    <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        #avatar-container {
-            width: 100vw;
-            height: 100vh;
-            background-color: #f0f0f0;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 0;
-        }
-        #chat-interface {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 600px;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        #chat-history {
-            max-height: 200px;
-            overflow-y: auto;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
-            margin-bottom: 5px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .message { padding: 5px 10px; border-radius: 5px; font-size: 14px; }
-        .user-msg { background-color: #e3f2fd; align-self: flex-end; }
-        .ai-msg { background-color: #f1f8e9; align-self: flex-start; }
-        #input-area { display: flex; gap: 10px; }
-        input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-    </style>
-    
-    <!-- Import Map for Three.js -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+    <title>AI Assistant</title>
+    <!-- Use Inter font for a modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="avatar-container"></div>
-
-    <div id="chat-interface">
-        <div id="chat-history">
-            <div class="message ai-msg">Hello! I am your AI assistant. Ask me anything.</div>
+    <div class="main-container">
+        <!-- Text/Avatar Side -->
+        <div id="avatar-container">
+            <div id="avatar-wrapper">
+                <div class="avatar-circle"></div>
+                <div class="avatar-circle"></div>
+                <!-- Using a more neutral/tech-focused avatar seed -->
+                <img id="avatar-image" src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=transparent" alt="AI Agent">
+            </div>
+            
+            <div class="avatar-status">
+                <span class="status-dot"></span>
+                Online & Ready
+            </div>
         </div>
-        <div id="input-area">
-            <input type="text" id="user-input" placeholder="Type a message..." />
-            <button id="send-btn">Send</button>
+
+        <!-- Chat Side -->
+        <div id="chat-interface">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <h2>AI Assistant</h2>
+                    <p>Always here to help</p>
+                </div>
+            </div>
+            
+            <div id="chat-history">
+                <div class="message ai-msg">
+                    Hello! I am your AI assistant. How can I help you today?
+                </div>
+            </div>
+
+            <div id="input-area">
+                <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
+                <button id="send-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 
