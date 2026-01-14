@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from google import genai
 from google.genai import types
+from groq import Groq
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -19,6 +20,14 @@ if not api_key:
     print("Warning: GEMINI_API_KEY not found in .env file")
 else:
     client = genai.Client(api_key=api_key)
+
+# Configure Groq
+groq_api_key = os.getenv("GROQ_API_KEY")
+groq_client = None
+if not groq_api_key:
+    print("Warning: GROQ_API_KEY not found in .env file")
+else:
+    groq_client = Groq(api_key=groq_api_key)
 
 MEMORY_FILE = 'memory.json'
 SYSTEM_PROMPT = "You are a friendly AI Avatar. You answer questions concisely and with a helpful tone."
@@ -52,34 +61,53 @@ def chat():
     # Limit history context (last 10 messages)
     context_window = user_history[-10:]
 
-    # Construct prompt for Gemini
-    # We will use the chat history format preferred by Gemini
-    # history = [{"role": "user", "parts": ["hello"]}, {"role": "model", "parts": ["hi"]}]
-    
-    gemini_history = []
-    # Add system prompt interaction if needed or prepended to context. 
-    # For simple chat models, we can just start the chat history.
-    
-    for msg in context_window:
-        role = "user" if msg['role'] == 'user' else "model"
-        gemini_history.append({"role": role, "parts": [msg['content']]})
+    # Initialize variables
+    ai_response = None
+    errors = []
 
-    # Initialize model
-    if not client:
-        return jsonify({"error": "Gemini API key not configured"}), 500
-    
-    try:
-        chat = client.chats.create(
-            model='gemini-2.0-flash',
-            history=gemini_history,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT
+    # Attempt 1: Gemini
+    if client:
+        try:
+            gemini_history = []
+            for msg in context_window:
+                role = "user" if msg['role'] == 'user' else "model"
+                gemini_history.append({"role": role, "parts": [msg['content']]})
+
+            chat = client.chats.create(
+                model='gemini-2.0-flash-lite',
+                history=gemini_history,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT
+                )
             )
-        )
-        response = chat.send_message(user_message)
-        ai_response = response.text
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            response = chat.send_message(user_message)
+            ai_response = response.text
+        except Exception as e:
+            print(f"Gemini Error: {e}")
+            errors.append(f"Gemini: {str(e)}")
+
+    # Attempt 2: Groq (Fallback)
+    if not ai_response and groq_client:
+        print("Falling back to Groq...")
+        try:
+            groq_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+            for msg in context_window:
+                role = "user" if msg['role'] == 'user' else "assistant"
+                groq_messages.append({"role": role, "content": msg['content']})
+            
+            groq_messages.append({"role": "user", "content": user_message})
+
+            chat_completion = groq_client.chat.completions.create(
+                messages=groq_messages,
+                model="llama3-70b-8192",
+            )
+            ai_response = chat_completion.choices[0].message.content
+        except Exception as e:
+            print(f"Groq Error: {e}")
+            errors.append(f"Groq: {str(e)}")
+
+    if not ai_response:
+        return jsonify({"error": "Failed to generate response", "details": errors}), 500
 
     # Update memory
     user_history.append({"role": "user", "content": user_message})
