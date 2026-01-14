@@ -1,12 +1,184 @@
 
+
 // --- Chat Logic ---
 const input = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const historyDiv = document.getElementById('chat-history');
-const avatarImage = document.getElementById('avatar-image');
+const avatarWrapper = document.getElementById('avatar-wrapper');
+
+// Speech Synthesis Setup
+const synth = window.speechSynthesis;
+let voices = [];
+let isTalking = false;
+let talkInterval = null;
+
+function loadVoices() {
+    voices = synth.getVoices();
+}
+loadVoices();
+if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+}
 
 // Generate a random session ID
-const sessionId = 'user_' + Math.random().toString(36).substr(2, 9);
+const sessionId = 'user_audio_' + Math.random().toString(36).substr(2, 9);
+
+// Mouth shapes map (pre-defined SVG paths or transforms)
+// Avataaars generally puts the mouth in a transform group. 
+// We will fetch 3 states on load.
+const mouthShapes = {
+    default: null,
+    smile: null,
+    scream: null
+};
+
+async function injectAvatarSVG() {
+    // Replace the image tag with actual SVG code to allow for finer transformation control
+    const img = document.getElementById('avatar-image');
+    if (img) {
+        try {
+            // 1. Fetch main avatar (default)
+            const response = await fetch(img.src);
+            const text = await response.text();
+            
+            // Create a temp container
+            const div = document.createElement('div');
+            div.innerHTML = text;
+            
+            const svg = div.querySelector('svg');
+            if (svg) {
+                svg.id = 'avatar-svg';
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+                svg.style.filter = 'drop-shadow(0 20px 40px rgba(99, 102, 241, 0.2))';
+                
+                // Replace img with svg
+                img.replaceWith(svg);
+            }
+
+            // 2. Pre-fetch mouth shapes (Lazy load)
+            const seed = 'Nolan'; // Keep matching index.html
+            const baseUrl = 'https://api.dicebear.com/9.x/avataaars/svg';
+            // We use empty string for style params as we are using default Nolan seed look, 
+            // or we could inspect the image, but simpler to just use the seed + mouth
+            const variations = [
+                { key: 'smile', url: `${baseUrl}?seed=${seed}&mouth=smile` },
+                { key: 'scream', url: `${baseUrl}?seed=${seed}&mouth=screamOpen` },
+                { key: 'default', url: `${baseUrl}?seed=${seed}&mouth=default` }
+            ];
+
+            for (const v of variations) {
+                const r = await fetch(v.url);
+                const t = await r.text();
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = t;
+                // Identify the mouth group. In DiceBear Avataaars, it's usually inside a group <g transform="translate(X Y)"> 
+                // We will look for differences. 
+                // Actually, a simpler way is to cache the ENTIRE inner SVG structure of the mouth group if we can find it.
+                // But structure varies.
+                // Strategy: We will just swap the entire SVG for mouth sync. It's fast enough for simple loop.
+                mouthShapes[v.key] = t;
+            }
+            
+            // Verify we have defaults
+            if (!mouthShapes.default) mouthShapes.default = text;
+
+        } catch (e) {
+            console.error("Failed to inject SVG for animation", e);
+        }
+    }
+}
+
+// Call this on load
+injectAvatarSVG();
+
+function speak(text) {
+    if (synth.speaking) {
+        synth.cancel();
+    }
+    
+    // ... setup logic ...
+    const utterThis = new SpeechSynthesisUtterance(text);
+    
+    // Select a voice (prefer English)
+    const voice = voices.find(v => v.lang.includes('en') && v.name.includes('Google')) || voices[0];
+    if (voice) utterThis.voice = voice;
+    
+    utterThis.pitch = 1;
+    utterThis.rate = 1;
+
+    utterThis.onstart = () => {
+        isTalking = true;
+        startLipSync();
+    };
+
+    utterThis.onend = () => {
+        isTalking = false;
+        stopLipSync();
+    };
+
+    utterThis.onerror = () => {
+        isTalking = false;
+        stopLipSync();
+    };
+
+    synth.speak(utterThis);
+}
+
+function startLipSync() {
+    if (talkInterval) clearInterval(talkInterval);
+    const svgContainer = document.getElementById('avatar-wrapper');
+    if (!svgContainer || !mouthShapes.scream) return; // Wait for load
+
+    // Toggle states
+    const states = ['default', 'smile', 'scream'];
+    
+    talkInterval = setInterval(() => {
+        if (!isTalking) {
+            stopLipSync();
+            return;
+        }
+        
+        // Randomly pick a mouth state for "flapping"
+        // Bias towards 'scream' (open) and 'default' (closed) for clear articulation feeling
+        const r = Math.random();
+        let state = 'default';
+        if (r > 0.7) state = 'scream';
+        else if (r > 0.4) state = 'smile';
+        
+        // Naive SVG swap - fast enough for modern browsers
+        const currentSVG = document.getElementById('avatar-svg');
+        if (currentSVG && mouthShapes[state]) {
+             // We reuse the ID and styles to keep transition smooth
+             const styles = currentSVG.getAttribute('style');
+             
+             // Create temp to parse
+             const parser = new DOMParser();
+             const doc = parser.parseFromString(mouthShapes[state], 'image/svg+xml');
+             const newSVG = doc.documentElement;
+             
+             newSVG.id = 'avatar-svg';
+             newSVG.setAttribute('style', styles);
+             
+             currentSVG.replaceWith(newSVG);
+        }
+
+    }, 100); // 100ms flap speed
+}
+
+function stopLipSync() {
+    if (talkInterval) clearInterval(talkInterval);
+    const currentSVG = document.getElementById('avatar-svg');
+    if (currentSVG && mouthShapes.default) {
+         const styles = currentSVG.getAttribute('style');
+         const parser = new DOMParser();
+         const doc = parser.parseFromString(mouthShapes.default, 'image/svg+xml');
+         const newSVG = doc.documentElement;
+         newSVG.id = 'avatar-svg';
+         newSVG.setAttribute('style', styles);
+         currentSVG.replaceWith(newSVG);
+    }
+}
 
 async function sendMessage() {
     const text = input.value.trim();
@@ -15,6 +187,10 @@ async function sendMessage() {
     // Display user message
     addMessageToUI('You', text, 'user-msg');
     input.value = '';
+    
+    // Stop previous speech if any
+    synth.cancel();
+    stopLipSync();
 
     try {
         const response = await fetch('http://localhost:5000/chat', {
@@ -33,8 +209,8 @@ async function sendMessage() {
         // Display AI response
         addMessageToUI('AI', data.response, 'ai-msg');
         
-        // Simple 2D "talking" animation (scale bounce)
-        animateAvatar();
+        // Speak the response
+        speak(data.response);
 
     } catch (error) {
         console.error('Error:', error);
@@ -50,13 +226,9 @@ function addMessageToUI(sender, text, className) {
     historyDiv.scrollTop = historyDiv.scrollHeight;
 }
 
+// Replaced by sophisticated lip sync
 function animateAvatar() {
-    if (avatarImage) {
-        avatarImage.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-            avatarImage.style.transform = 'scale(1.0)';
-        }, 200);
-    }
+    // Legacy holder
 }
 
 sendBtn.addEventListener('click', (e) => {
