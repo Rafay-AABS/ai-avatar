@@ -59,7 +59,13 @@ function animateAvatar() {
     }
 }
 
-sendBtn.addEventListener('click', sendMessage);
+sendBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    sendMessage();
+});
 input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+    }
 });
