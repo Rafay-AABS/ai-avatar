@@ -51,7 +51,7 @@ def generate_response(user_message, context_window):
                 gemini_history.append({"role": role, "parts": [msg['content']]})
 
             chat = client.chats.create(
-                model='gemini-2.0-flash-lite',
+                model='gemini-1.5-flash',
                 history=gemini_history,
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT
