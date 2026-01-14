@@ -3,148 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Assistant</title>
-    <style>
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-        #avatar-container {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 0;
-        }
-        #avatar-image {
-            max-width: 250px;
-            max-height: 250px;
-            width: 30%;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
-        }
-        #chat-interface {
-            position: absolute;
-            bottom: 20px;
-            right: 20px; /* Moved to bottom right corner */
-            left: auto; /* Remove centering */
-            transform: none; /* Remove centering */
-            width: 350px; /* Fixed width for a widget feel */
-            max-width: 90vw;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 0;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-        }
-        .chat-header {
-            background: #007bff;
-            color: white;
-            padding: 12px 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #4cd137;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        #chat-history {
-            height: 300px;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: #f8f9fa;
-        }
-        .message { 
-            padding: 10px 15px; 
-            border-radius: 15px; 
-            font-size: 14px; 
-            line-height: 1.4;
-            max-width: 80%;
-            position: relative;
-        }
-        .user-msg { 
-            background-color: #007bff; 
-            color: white; 
-            align-self: flex-end; 
-            border-bottom-right-radius: 5px;
-        }
-        .ai-msg { 
-            background-color: #ffffff; 
-            color: #333; 
-            align-self: flex-start; 
-            border-bottom-left-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        #input-area { 
-            display: flex; 
-            padding: 15px; 
-            background: white; 
-            border-top: 1px solid #eee;
-            gap: 10px; 
-        }
-        input { 
-            flex-grow: 1; 
-            padding: 10px 15px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 25px; 
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        input:focus { border-color: #007bff; }
-        button { 
-            padding: 8px 20px; 
-            background-color: #007bff; 
-            color: white; 
-            border: none; 
-            border-radius: 25px; 
-            cursor: pointer; 
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        button:hover { background-color: #0056b3; }
-        /* Scrollbar styling */
-        #chat-history::-webkit-scrollbar { width: 6px; }
-        #chat-history::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
-    </style>
+    <title>AI Assistant</title>
+    <!-- Use Inter font for a modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="avatar-container">
-        <!-- Professional 2D Avatar -->
-        <img id="avatar-image" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Robert&clothing=blazerAndShirt&accessories=prescription02" alt="Professional Avatar">
+        <div id="avatar-wrapper">
+            <!-- Professional 2D Avatar -->
+            <!-- Using a more neutral/tech-focused avatar seed -->
+            <img id="avatar-image" src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=transparent" alt="AI Agent">
+        </div>
     </div>
 
     <div id="chat-interface">
         <div class="chat-header">
-            <span class="status-dot"></span>
-            Professional Assistant</span>
-            AI Companion
+            <div class="status-indicator">
+                <span class="status-pulse"></span>
+                <span class="status-dot"></span>
+            </div>
+            <span>AI Assistant</span>
         </div>
+        
         <div id="chat-history">
-            <div class="message ai-msg">Hello! I'm here to chat.</div>
+            <div class="message ai-msg">
+                Hello! I am your AI assistant. How can I help you today?
+            </div>
         </div>
+
         <div id="input-area">
-            <input type="text" id="user-input" placeholder="Type a message..." />
-            <button id="send-btn">Send</button>
+            <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off" />
+            <button id="send-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
         </div>
     </div>
 
