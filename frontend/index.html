@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Avatar Chat</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #avatar-container {
+            width: 100vw;
+            height: 100vh;
+            background-color: #f0f0f0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+        #chat-interface {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #chat-history {
+            max-height: 200px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .message { padding: 5px 10px; border-radius: 5px; font-size: 14px; }
+        .user-msg { background-color: #e3f2fd; align-self: flex-end; }
+        .ai-msg { background-color: #f1f8e9; align-self: flex-start; }
+        #input-area { display: flex; gap: 10px; }
+        input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+    </style>
+    
+    <!-- Import Map for Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="avatar-container"></div>
+
+    <div id="chat-interface">
+        <div id="chat-history">
+            <div class="message ai-msg">Hello! I am your AI assistant. Ask me anything.</div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type a message..." />
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script type="module" src="./avatar.js"></script>
+</body>
+</html>
