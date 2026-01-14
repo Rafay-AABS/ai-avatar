@@ -99,7 +99,7 @@ def chat():
 
             chat_completion = groq_client.chat.completions.create(
                 messages=groq_messages,
-                model="llama3-70b-8192",
+                model="llama-3.1-8b-instant",
             )
             ai_response = chat_completion.choices[0].message.content
         except Exception as e:
