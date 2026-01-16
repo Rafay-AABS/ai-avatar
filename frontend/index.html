@@ -76,10 +76,15 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="voice-select">Voice</label>
-                    <div class="select-wrapper">
-                        <select id="voice-select"></select>
-                        <i class="fa-solid fa-chevron-down"></i>
+                    <label>Voice</label>
+                    <div class="custom-select" id="voice-dropdown">
+                        <div class="select-trigger">
+                            <span class="selected-text">Select voice...</span>
+                            <i class="fa-solid fa-chevron-down arrow"></i>
+                        </div>
+                        <div class="select-options">
+                            <!-- Options populated by JS -->
+                        </div>
                     </div>
                 </div>
             </div>

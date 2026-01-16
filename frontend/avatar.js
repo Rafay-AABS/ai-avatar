@@ -11,7 +11,13 @@ const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const closeSettingsBtn = document.getElementById('close-settings-btn');
 const saveSettingsBtn = document.getElementById('save-settings-btn');
-const voiceSelect = document.getElementById('voice-select');
+
+// Dropdown Elements
+const voiceDropdown = document.getElementById('voice-dropdown');
+const voiceTrigger = voiceDropdown.querySelector('.select-trigger');
+const voiceOptionsContainer = voiceDropdown.querySelector('.select-options');
+const voiceTriggerText = voiceDropdown.querySelector('.selected-text');
+
 let selectedVoiceIndex = 0;
 
 // Speech Synthesis Setup
@@ -22,32 +28,61 @@ let talkInterval = null;
 
 function loadVoices() {
     voices = synth.getVoices();
-    voiceSelect.innerHTML = '';
+    voiceOptionsContainer.innerHTML = '';
     
     voices.forEach((voice, index) => {
-        const option = document.createElement('option');
-        option.textContent = `${voice.name} (${voice.lang})`;
+        const option = document.createElement('div');
+        option.classList.add('custom-option');
         
-        if (voice.default) {
-            option.textContent += ' -- DEFAULT';
+        // Build label
+        let label = `${voice.name} (${voice.lang})`;
+        if (voice.default) label += ' ★';
+        option.textContent = label;
+        
+        // Handle Selection
+        option.addEventListener('click', () => {
+             selectedVoiceIndex = index;
+             updateDropdownUI();
+             voiceDropdown.classList.remove('open');
+        });
+
+        if (index === selectedVoiceIndex) {
+            option.classList.add('selected');
         }
 
-        option.setAttribute('data-lang', voice.lang);
-        option.setAttribute('data-name', voice.name);
-        option.value = index;
-        voiceSelect.appendChild(option);
+        voiceOptionsContainer.appendChild(option);
     });
 
-    // Attempt to auto-select a good default if not set
-    const defaultIndex = voices.findIndex(v => v.lang.includes('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark'))) 
+    // Auto-select if not set
+    if (voices.length > 0 && selectedVoiceIndex === 0) {
+        // Try to find helper default
+         const defaultIndex = voices.findIndex(v => v.lang.includes('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark'))) 
         || voices.findIndex(v => v.lang.includes('en')) 
         || 0;
-    
-    if (defaultIndex !== -1) {
-        voiceSelect.value = defaultIndex;
-        selectedVoiceIndex = defaultIndex;
+        
+        if (defaultIndex !== -1) {
+            selectedVoiceIndex = defaultIndex;
+        }
     }
+    
+    updateDropdownUI();
 }
+
+function updateDropdownUI() {
+    if (voices[selectedVoiceIndex]) {
+        voiceTriggerText.textContent = `${voices[selectedVoiceIndex].name} (${voices[selectedVoiceIndex].lang})`;
+    } else {
+        voiceTriggerText.textContent = "Select voice...";
+    }
+    
+    // Update active class on options
+    const options = voiceOptionsContainer.querySelectorAll('.custom-option');
+    options.forEach((opt, idx) => {
+        if (idx === selectedVoiceIndex) opt.classList.add('selected');
+        else opt.classList.remove('selected');
+    });
+}
+
 loadVoices();
 if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = loadVoices;
@@ -295,20 +330,35 @@ input.addEventListener('keypress', (e) => {
 });
 
 
-// Settings Modal Logic
+// Settings Modal & Dropdown Logic
 settingsBtn.addEventListener('click', () => {
     settingsModal.classList.add('active');
-    voiceSelect.value = selectedVoiceIndex;
+    // Ensure UI matches current state
+    updateDropdownUI();
 });
 
 function closeSettings() {
     settingsModal.classList.remove('active');
+    voiceDropdown.classList.remove('open');
 }
+
+// Toggle Dropdown
+voiceTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    voiceDropdown.classList.toggle('open');
+});
+
+// Close dropdown when clicking outside
+window.addEventListener('click', (e) => {
+    if (!voiceDropdown.contains(e.target)) {
+        voiceDropdown.classList.remove('open');
+    }
+});
 
 closeSettingsBtn.addEventListener('click', closeSettings);
 settingsModal.querySelector('.modal-backdrop').addEventListener('click', closeSettings);
 
 saveSettingsBtn.addEventListener('click', () => {
-    selectedVoiceIndex = voiceSelect.value;
+    // Selection is already updated in real-time via index
     closeSettings();
 });
