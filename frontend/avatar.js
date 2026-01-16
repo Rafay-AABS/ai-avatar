@@ -58,7 +58,8 @@ async function injectAvatarSVG() {
 
             // 2. Pre-fetch mouth shapes (Lazy load)
             const baseUrl = 'https://api.dicebear.com/9.x/avataaars/svg';
-            const params = 'seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothingColor=262e33&accessoriesColor=262e33&top=shortWaved&eyes=happy&hairColor=2c1b18';
+            // Ensure this matches the index.html src exactly to prevent jumping
+            const params = 'seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothingColor=262e33&accessoriesColor=262e33&top=shortWaved&eyes=default&hairColor=2c1b18&skinColor=edb98a';
 
             const variations = [
                 { key: 'smile', url: `${baseUrl}?${params}&mouth=smile` },
@@ -235,10 +236,10 @@ async function sendMessage() {
 function addMessageToUI(sender, text, className) {
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message', className);
-    return msgDiv;
     msgDiv.textContent = `${sender}: ${text}`;
     historyDiv.appendChild(msgDiv);
     historyDiv.scrollTop = historyDiv.scrollHeight;
+    return msgDiv;
 }
 
 // Replaced by sophisticated lip sync

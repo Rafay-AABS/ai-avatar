@@ -250,5 +250,43 @@
             "role": "ai",
             "content": "Qdrant is an open-source **vector database** that allows you to store, search, and manage vector embeddings at scale.\n\nHere's a quick breakdown:\n\n*   **What it does:** It takes high-dimensional vectors (numerical representations of data like text, images, or audio) and lets you perform **similarity searches** very quickly.\n*   **Why it's useful:** It's a core component for AI applications that rely on finding \"similar\" items, such as:\n    *   Semantic search (finding concepts, not just keywords)\n    *   Recommendation systems\n    *   Anomaly detection\n    *   Generative AI (retrieval augmented generation)\n\nIn essence, Qdrant helps AI systems understand and retrieve information based on meaning and context, rather than just exact matches."
         }
+    ],
+    "user_audio_03x2z7271": [
+        {
+            "role": "user",
+            "content": "Hello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello! How can I help you today?"
+        }
+    ],
+    "user_audio_2qu3wkjju": [
+        {
+            "role": "user",
+            "content": "hello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello there! How can I help you today?"
+        },
+        {
+            "role": "user",
+            "content": "bye"
+        },
+        {
+            "role": "ai",
+            "content": "It was nice chatting with you. Goodbye!"
+        }
+    ],
+    "user_audio_0dlfxoqtn": [
+        {
+            "role": "user",
+            "content": "Heello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello! How can I help you today?"
+        }
     ]
 }
