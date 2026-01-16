@@ -43,7 +43,7 @@
                     <h3>Conversation</h3>
                     <p>Ask me anything</p>
                 </div>
-                <button class="icon-btn" title="Settings">
+                <button id="settings-btn" class="icon-btn" title="Settings">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
@@ -63,6 +63,28 @@
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button id="close-settings-btn" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="voice-select">Voice</label>
+                    <div class="select-wrapper">
+                        <select id="voice-select"></select>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-settings-btn" class="primary-btn">Save Changes</button>
             </div>
         </div>
     </div>

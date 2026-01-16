@@ -6,6 +6,14 @@ const sendBtn = document.getElementById('send-btn');
 const historyDiv = document.getElementById('chat-history');
 const avatarWrapper = document.getElementById('avatar-wrapper');
 
+// --- Settings UI ---
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const closeSettingsBtn = document.getElementById('close-settings-btn');
+const saveSettingsBtn = document.getElementById('save-settings-btn');
+const voiceSelect = document.getElementById('voice-select');
+let selectedVoiceIndex = 0;
+
 // Speech Synthesis Setup
 const synth = window.speechSynthesis;
 let voices = [];
@@ -14,6 +22,31 @@ let talkInterval = null;
 
 function loadVoices() {
     voices = synth.getVoices();
+    voiceSelect.innerHTML = '';
+    
+    voices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        
+        if (voice.default) {
+            option.textContent += ' -- DEFAULT';
+        }
+
+        option.setAttribute('data-lang', voice.lang);
+        option.setAttribute('data-name', voice.name);
+        option.value = index;
+        voiceSelect.appendChild(option);
+    });
+
+    // Attempt to auto-select a good default if not set
+    const defaultIndex = voices.findIndex(v => v.lang.includes('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark'))) 
+        || voices.findIndex(v => v.lang.includes('en')) 
+        || 0;
+    
+    if (defaultIndex !== -1) {
+        voiceSelect.value = defaultIndex;
+        selectedVoiceIndex = defaultIndex;
+    }
 }
 loadVoices();
 if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -100,11 +133,8 @@ function speak(text, onTextUpdate) {
     // ... setup logic ...
     const utterThis = new SpeechSynthesisUtterance(text);
     
-    // Select a voice (prefer English, Male)
-    // Prioritize keys often associated with male voices like "David" (Windows), "Mark" (Windows), or explicit "Male" tag
-    const voice = voices.find(v => v.lang.includes('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark'))) 
-               || voices.find(v => v.lang.includes('en')) 
-               || voices[0];
+    // Select a voice from settings or fallback
+    const voice = voices[selectedVoiceIndex]; 
     if (voice) utterThis.voice = voice;
     
     utterThis.pitch = 1;
@@ -262,4 +292,23 @@ input.addEventListener('keypress', (e) => {
         e.preventDefault();
         sendMessage();
     }
+});
+
+
+// Settings Modal Logic
+settingsBtn.addEventListener('click', () => {
+    settingsModal.classList.add('active');
+    voiceSelect.value = selectedVoiceIndex;
+});
+
+function closeSettings() {
+    settingsModal.classList.remove('active');
+}
+
+closeSettingsBtn.addEventListener('click', closeSettings);
+settingsModal.querySelector('.modal-backdrop').addEventListener('click', closeSettings);
+
+saveSettingsBtn.addEventListener('click', () => {
+    selectedVoiceIndex = voiceSelect.value;
+    closeSettings();
 });
