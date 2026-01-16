@@ -99,8 +99,11 @@ function speak(text) {
     // ... setup logic ...
     const utterThis = new SpeechSynthesisUtterance(text);
     
-    // Select a voice (prefer English)
-    const voice = voices.find(v => v.lang.includes('en') && v.name.includes('Google')) || voices[0];
+    // Select a voice (prefer English, Male)
+    // Prioritize keys often associated with male voices like "David" (Windows), "Mark" (Windows), or explicit "Male" tag
+    const voice = voices.find(v => v.lang.includes('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Mark'))) 
+               || voices.find(v => v.lang.includes('en')) 
+               || voices[0];
     if (voice) utterThis.voice = voice;
     
     utterThis.pitch = 1;
