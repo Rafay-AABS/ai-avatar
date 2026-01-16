@@ -91,7 +91,7 @@ async function injectAvatarSVG() {
 // Call this on load
 injectAvatarSVG();
 
-function speak(text) {
+function speak(text, onTextUpdate) {
     if (synth.speaking) {
         synth.cancel();
     }
@@ -114,9 +114,18 @@ function speak(text) {
         startLipSync();
     };
 
+    utterThis.onboundary = (event) => {
+        if (onTextUpdate && event.name === 'word') {
+             // Reconstruct text up to current word
+             const partial = text.substring(0, event.charIndex + (event.charLength || 0));
+             onTextUpdate(partial);
+        }
+    };
+
     utterThis.onend = () => {
         isTalking = false;
         stopLipSync();
+        if (onTextUpdate) onTextUpdate(text); // Ensure complete text
     };
 
     utterThis.onerror = () => {
@@ -209,10 +218,13 @@ async function sendMessage() {
         const data = await response.json();
         
         // Display AI response
-        addMessageToUI('AI', data.response, 'ai-msg');
+        const msgBubble = addMessageToUI('AI', '...', 'ai-msg');
         
         // Speak the response
-        speak(data.response);
+        speak(data.response, (textUpdate) => {
+            msgBubble.textContent = `AI: ${textUpdate}`;
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        });
 
     } catch (error) {
         console.error('Error:', error);
@@ -223,6 +235,7 @@ async function sendMessage() {
 function addMessageToUI(sender, text, className) {
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message', className);
+    return msgDiv;
     msgDiv.textContent = `${sender}: ${text}`;
     historyDiv.appendChild(msgDiv);
     historyDiv.scrollTop = historyDiv.scrollHeight;
