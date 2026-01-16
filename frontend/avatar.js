@@ -96,8 +96,7 @@ const sessionId = 'user_audio_' + Math.random().toString(36).substr(2, 9);
 // We will fetch 3 states on load.
 const mouthShapes = {
     default: null,
-    smile: null,
-    scream: null
+    smile: null
 };
 
 async function injectAvatarSVG() {
@@ -127,11 +126,10 @@ async function injectAvatarSVG() {
             // 2. Pre-fetch mouth shapes (Lazy load)
             const baseUrl = 'https://api.dicebear.com/9.x/avataaars/svg';
             // Ensure this matches the index.html src exactly to prevent jumping
-            const params = 'seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothingColor=262e33&accessoriesColor=262e33&top=shortWaved&eyes=default&hairColor=2c1b18&skinColor=edb98a';
+            const params = 'seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothesColor=3c4f5c,65c9ff,262e33&accessoriesColor=262e33&top=shortWaved&eyes=default&hairColor=2c1b18&skinColor=edb98a';
 
             const variations = [
                 { key: 'smile', url: `${baseUrl}?${params}&mouth=smile` },
-                { key: 'scream', url: `${baseUrl}?${params}&mouth=screamOpen` },
                 { key: 'default', url: `${baseUrl}?${params}&mouth=default` }
             ];
 
@@ -205,10 +203,9 @@ function speak(text, onTextUpdate) {
 function startLipSync() {
     if (talkInterval) clearInterval(talkInterval);
     const svgContainer = document.getElementById('avatar-wrapper');
-    if (!svgContainer || !mouthShapes.scream) return; // Wait for load
+    if (!svgContainer || !mouthShapes.default) return; // Wait for load
 
     // Toggle states
-    const states = ['default', 'smile', 'scream'];
     
     talkInterval = setInterval(() => {
         if (!isTalking) {
@@ -217,11 +214,9 @@ function startLipSync() {
         }
         
         // Randomly pick a mouth state for "flapping"
-        // Bias towards 'scream' (open) and 'default' (closed) for clear articulation feeling
         const r = Math.random();
         let state = 'default';
-        if (r > 0.7) state = 'scream';
-        else if (r > 0.4) state = 'smile';
+        if (r > 0.5) state = 'smile';
         
         // Naive SVG swap - fast enough for modern browsers
         const currentSVG = document.getElementById('avatar-svg');
