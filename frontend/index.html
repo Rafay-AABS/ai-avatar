@@ -3,54 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Assistant</title>
-    <!-- Use Inter font for a modern look -->
+    <title>AI Avatar Assistant</title>
+    <!-- Inter & JetBrains Mono for a tech feel -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <div class="main-container">
+    <!-- Ambient Background Elements -->
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
+
+    <div class="glass-container">
         <!-- Text/Avatar Side -->
         <div id="avatar-container">
+            <div class="avatar-halo"></div>
             <div id="avatar-wrapper">
-                <div class="avatar-circle"></div>
-                <div class="avatar-circle"></div>
                 <!-- Switched to Avataaars for lip sync support -->
                 <img id="avatar-image" src="https://api.dicebear.com/9.x/avataaars/svg?seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothingColor=262e33&accessoriesColor=262e33&top=shortWaved&eyes=default&hairColor=2c1b18&mouth=default&skinColor=edb98a" alt="AI Agent">
             </div>
             
-            <div class="avatar-status">
-                <span class="status-dot"></span>
-                Online & Ready
+            <div class="avatar-info">
+                <h2>Alexander</h2>
+                <div class="avatar-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Online & Ready</span>
+                </div>
             </div>
         </div>
 
         <!-- Chat Side -->
         <div id="chat-interface">
             <div class="chat-header">
-                <div class="chat-title">
-                    <h2>AI Assistant</h2>
-                    <p>Always here to help</p>
+                <div class="header-info">
+                    <h3>Conversation</h3>
+                    <p>Ask me anything</p>
                 </div>
+                <button class="icon-btn" title="Settings">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
             
             <div id="chat-history">
                 <div class="message ai-msg">
-                    Hello! I am your AI assistant. How can I help you today?
+                    <div class="message-content">
+                        Hello! I am your AI assistant. How can I help you today?
+                    </div>
                 </div>
             </div>
 
             <div id="input-area">
-                <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
-                <button id="send-btn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
-                </button>
+                <div class="input-wrapper">
+                    <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
+                    <button id="send-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

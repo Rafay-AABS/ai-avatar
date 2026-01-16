@@ -223,7 +223,7 @@ async function sendMessage() {
         
         // Speak the response
         speak(data.response, (textUpdate) => {
-            msgBubble.textContent = `AI: ${textUpdate}`;
+            msgBubble.textContent = textUpdate;
             historyDiv.scrollTop = historyDiv.scrollHeight;
         });
 
@@ -236,10 +236,16 @@ async function sendMessage() {
 function addMessageToUI(sender, text, className) {
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message', className);
-    msgDiv.textContent = `${sender}: ${text}`;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('message-content');
+    contentDiv.textContent = text; // Just text, "Sender:" is implied by side/color
+    
+    msgDiv.appendChild(contentDiv);
+    
     historyDiv.appendChild(msgDiv);
     historyDiv.scrollTop = historyDiv.scrollHeight;
-    return msgDiv;
+    return contentDiv; // Return content div for text updates
 }
 
 // Replaced by sophisticated lip sync
