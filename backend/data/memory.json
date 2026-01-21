@@ -378,5 +378,15 @@
             "role": "ai",
             "content": "It's nice to meet you. How are you doing today?"
         }
+    ],
+    "user_audio_cva6pxd9j": [
+        {
+            "role": "user",
+            "content": "hello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello there! It's nice to meet you. How can I assist you today?"
+        }
     ]
 }

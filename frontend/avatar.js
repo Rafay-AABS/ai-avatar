@@ -136,14 +136,40 @@ function initThreeAvatar() {
     handleResize();
     window.addEventListener('resize', handleResize);
 
+    // Blinking State
+    let isBlinking = false;
+    let blinkStartTime = 0;
+    let nextBlinkTime = 0;
+    const blinkDuration = 0.2; // seconds
+
     const animate = () => {
         requestAnimationFrame(animate);
         const delta = clock.getDelta();
+        const t = clock.elapsedTime;
+
+        // Blink Logic
+        if (!isBlinking && t > nextBlinkTime) {
+            isBlinking = true;
+            blinkStartTime = t;
+            nextBlinkTime = t + 2 + Math.random() * 4; // Blink every 2-6 seconds
+        }
+
+        let blinkValue = 0;
+        if (isBlinking) {
+            const blinkProgress = (t - blinkStartTime) / blinkDuration;
+            if (blinkProgress >= 1) {
+                isBlinking = false;
+                blinkValue = 0;
+            } else {
+                // Open -> Closed -> Open (0 -> 1 -> 0)
+                blinkValue = Math.sin(blinkProgress * Math.PI); 
+            }
+        }
 
         if (mixer) mixer.update(delta);
 
         if (avatarModel) {
-            const t = clock.elapsedTime;
+            
             avatarModel.rotation.y = 0; // Keep rotation still
             const baseY = 0.1; // Keep avatar positioned lower
             avatarModel.position.y = baseY; // Remove bobbing animation
@@ -182,38 +208,32 @@ function initThreeAvatar() {
                 }
             }
             
-            // Apply morph target lipsync
-            if (isTalking) {
-                avatarModel.traverse((node) => {
-                    if (node.isMesh && node.morphTargetInfluences) {
-                        const morphDict = node.userData.morphTargets;
-                        if (morphDict) {
-                            // Animate mouth movements for lipsync
-                            const lipValue = Math.abs(Math.sin(t * 8)) * 0.7;
-                            
-                            // Try common morph target names
-                            if ('mouthOpen' in morphDict) {
-                                node.morphTargetInfluences[morphDict['mouthOpen']] = lipValue;
-                            }
-                            if ('jawOpen' in morphDict) {
-                                node.morphTargetInfluences[morphDict['jawOpen']] = lipValue * 0.8;
-                            }
-                            if ('viseme_aa' in morphDict) {
-                                node.morphTargetInfluences[morphDict['viseme_aa']] = lipValue;
-                            }
-                        }
-                    }
-                });
-            } else {
-                // Reset morph targets when not talking
-                avatarModel.traverse((node) => {
-                    if (node.isMesh && node.morphTargetInfluences) {
+            // Unified Morph Target Animation (Lipsync + Blinking)
+            avatarModel.traverse((node) => {
+                if (node.isMesh && node.morphTargetInfluences) {
+                    const morphDict = node.userData.morphTargets;
+                    if (morphDict) {
+                        // 1. Reset all morphs first to avoid stuck states
                         for (let i = 0; i < node.morphTargetInfluences.length; i++) {
                             node.morphTargetInfluences[i] = 0;
                         }
+
+                        // 2. Apply Blink
+                        if ('eyesClosed' in morphDict) node.morphTargetInfluences[morphDict['eyesClosed']] = blinkValue;
+                        if ('blink' in morphDict) node.morphTargetInfluences[morphDict['blink']] = blinkValue;
+                        if ('eyeBlink_L' in morphDict) node.morphTargetInfluences[morphDict['eyeBlink_L']] = blinkValue;
+                        if ('eyeBlink_R' in morphDict) node.morphTargetInfluences[morphDict['eyeBlink_R']] = blinkValue;
+
+                        // 3. Apply Lipsync (only if talking)
+                        if (isTalking) {
+                            const lipValue = Math.abs(Math.sin(t * 8)) * 0.7;
+                            if ('mouthOpen' in morphDict) node.morphTargetInfluences[morphDict['mouthOpen']] = lipValue;
+                            if ('jawOpen' in morphDict) node.morphTargetInfluences[morphDict['jawOpen']] = lipValue * 0.8;
+                            if ('viseme_aa' in morphDict) node.morphTargetInfluences[morphDict['viseme_aa']] = lipValue;
+                        }
                     }
-                });
-            }
+                }
+            });
         }
 
         renderer.render(scene, camera);
