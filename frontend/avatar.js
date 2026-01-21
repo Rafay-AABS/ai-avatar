@@ -131,6 +131,12 @@ function initThreeAvatar() {
                     if (name.includes('righthand') || name.includes('r_hand')) {
                         avatarModel.userData.rightHand = node;
                     }
+                    if (name.includes('lefteye') || name.includes('l_eye')) {
+                        avatarModel.userData.leftEye = node;
+                    }
+                    if (name.includes('righteye') || name.includes('r_eye')) {
+                        avatarModel.userData.rightEye = node;
+                    }
                 }
             });
 
@@ -163,6 +169,11 @@ function initThreeAvatar() {
     let nextBlinkTime = 0;
     const blinkDuration = 0.2; // seconds
 
+    // Eye Movement State
+    let nextEyeMoveTime = 0;
+    let eyeTargetX = 0;
+    let eyeTargetY = 0;
+
     const animate = () => {
         requestAnimationFrame(animate);
         const delta = clock.getDelta();
@@ -194,6 +205,24 @@ function initThreeAvatar() {
             avatarModel.rotation.y = 0; // Keep rotation still
             const baseY = 0.1; // Keep avatar positioned lower
             avatarModel.position.y = baseY; // Remove bobbing animation
+
+            // Eye Movement (Saccades)
+            if (t > nextEyeMoveTime) {
+                // Pick a new random target within a small range
+                eyeTargetX = (Math.random() - 0.5) * 0.3; // Horizontal range
+                eyeTargetY = (Math.random() - 0.5) * 0.15; // Vertical range (smaller)
+                nextEyeMoveTime = t + 1 + Math.random() * 3; // Move every 1-4 seconds
+            }
+
+            // Smoothly move eyes to target
+            if (avatarModel.userData.leftEye) {
+                avatarModel.userData.leftEye.rotation.y = THREE.MathUtils.lerp(avatarModel.userData.leftEye.rotation.y, eyeTargetX, 0.1);
+                avatarModel.userData.leftEye.rotation.x = THREE.MathUtils.lerp(avatarModel.userData.leftEye.rotation.x, eyeTargetY, 0.1);
+            }
+            if (avatarModel.userData.rightEye) {
+                avatarModel.userData.rightEye.rotation.y = THREE.MathUtils.lerp(avatarModel.userData.rightEye.rotation.y, eyeTargetX, 0.1);
+                avatarModel.userData.rightEye.rotation.x = THREE.MathUtils.lerp(avatarModel.userData.rightEye.rotation.x, eyeTargetY, 0.1);
+            }
             
             // Animate hands when talking
             if (isTalking) {
@@ -233,9 +262,6 @@ function initThreeAvatar() {
             avatarModel.traverse((node) => {
                 if (node.isMesh && node.morphTargetInfluences && node.userData.blinkIndices) {
                     
-                    // 1. Reset specific morphs (Optimization: Don't reset everything, just what we touch)
-                    // Actually, resetting what we touch is cleaner.
-                    
                     const blinkIndices = node.userData.blinkIndices;
                     const mouthIndices = node.userData.mouthIndices;
 
@@ -252,7 +278,17 @@ function initThreeAvatar() {
                         });
 
                         if (isTalking) {
-                            const lipValue = Math.abs(Math.sin(t * 8)) * 0.7;
+                            // Introduce interruptions for more natural speech
+                            // High freq = syllables, Low freq = rhythm/pauses
+                            const syllabus = Math.sin(t * 20);
+                            const rhythm = Math.sin(t * 5) + Math.sin(t * 3.3);
+                            
+                            let lipValue = 0;
+                            if (rhythm > -0.2) {
+                                lipValue = Math.abs(syllabus) * 0.25;
+                                lipValue *= (0.5 + 0.5 * (rhythm + 1) / 3);
+                            }
+
                             mouthIndices.forEach(item => {
                                 // Simple weight logic
                                 if (item.name.includes('jawopen')) {

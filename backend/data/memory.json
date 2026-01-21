@@ -397,6 +397,34 @@
         {
             "role": "ai",
             "content": "Hello there. It's nice to meet you. Is there something I can help you with or would you like to chat?"
+        },
+        {
+            "role": "user",
+            "content": "hello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello back. How's your day going so far? I'm here to listen or answer any questions you may have."
+        }
+    ],
+    "user_audio_m0utfjv5m": [
+        {
+            "role": "user",
+            "content": "hello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello! It's nice to meet you. How can I assist you today?"
+        }
+    ],
+    "user_audio_n87nhv8cw": [
+        {
+            "role": "user",
+            "content": "hello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello. How can I assist you today?"
         }
     ]
 }
