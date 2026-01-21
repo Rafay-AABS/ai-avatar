@@ -328,5 +328,23 @@
             "role": "ai",
             "content": "Hello there! How can I help you today?"
         }
+    ],
+    "user_audio_4pl1ovzjw": [
+        {
+            "role": "user",
+            "content": "Hello"
+        },
+        {
+            "role": "ai",
+            "content": "Nice to meet you. How can I assist you today?"
+        },
+        {
+            "role": "user",
+            "content": "briefly explain AI"
+        },
+        {
+            "role": "ai",
+            "content": "AI stands for Artificial Intelligence. It's a field of computer science that creates intelligent machines capable of performing tasks that would typically require human intelligence, such as learning, problem-solving, and decision-making. Think of AI as a way to make computers think and act more like humans!"
+        }
     ]
 }

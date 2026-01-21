@@ -126,7 +126,7 @@ async function injectAvatarSVG() {
             // 2. Pre-fetch mouth shapes (Lazy load)
             const baseUrl = 'https://api.dicebear.com/9.x/avataaars/svg';
             // Ensure this matches the index.html src exactly to prevent jumping
-            const params = 'seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothesColor=3c4f5c,65c9ff,262e33&accessoriesColor=262e33&top=shortWaved&eyes=default&hairColor=2c1b18&skinColor=edb98a';
+            const params = 'seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothesColor=3c4f5c,65c9ff,262e33&accessoriesColor=262e33&top=shortWaved&eyes=default&hairColor=2c1b18';
 
             const variations = [
                 { key: 'smile', url: `${baseUrl}?${params}&mouth=smile` },
