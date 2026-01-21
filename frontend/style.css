@@ -125,9 +125,16 @@ body {
     animation: avatar-float 6s ease-in-out infinite;
 }
 
-#avatar-image, #avatar-svg {
+#avatar-image, #avatar-svg, #avatar-canvas {
     width: 100%;
     height: 100%;
+}
+
+#avatar-canvas {
+    display: block;
+    outline: none;
+    border-radius: 18px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 60%);
 }
 
 .avatar-info {

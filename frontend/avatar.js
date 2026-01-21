@@ -1,10 +1,11 @@
-
+import * as THREE from 'https://esm.sh/three@0.161.0';
+import { GLTFLoader } from 'https://esm.sh/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
 
 // --- Chat Logic ---
 const input = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const historyDiv = document.getElementById('chat-history');
-const avatarWrapper = document.getElementById('avatar-wrapper');
+const avatarHalo = document.querySelector('.avatar-halo');
 
 // --- Settings UI ---
 const settingsBtn = document.getElementById('settings-btn');
@@ -24,7 +25,102 @@ let selectedVoiceIndex = 0;
 const synth = window.speechSynthesis;
 let voices = [];
 let isTalking = false;
-let talkInterval = null;
+
+// --- Three.js Avatar ---
+const canvas = document.getElementById('avatar-canvas');
+let renderer = null;
+let scene = null;
+let camera = null;
+let avatarModel = null;
+let mixer = null;
+const clock = new THREE.Clock();
+
+function initThreeAvatar() {
+    if (!canvas) return;
+
+    renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+    camera.position.set(0, 1.4, 2.4);
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.2);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    keyLight.position.set(2, 3, 2);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x93c5fd, 0.6);
+    rimLight.position.set(-2, 2, -2);
+    scene.add(rimLight);
+
+    const loader = new GLTFLoader();
+    loader.load(
+        './696ce12c29115399d7fe8f2f.glb',
+        (gltf) => {
+            avatarModel = gltf.scene;
+            scene.add(avatarModel);
+
+            const box = new THREE.Box3().setFromObject(avatarModel);
+            const size = new THREE.Vector3();
+            const center = new THREE.Vector3();
+            box.getSize(size);
+            box.getCenter(center);
+
+            avatarModel.position.sub(center);
+
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            const scale = 1.6 / maxDim;
+            avatarModel.scale.setScalar(scale);
+
+            if (gltf.animations && gltf.animations.length > 0) {
+                mixer = new THREE.AnimationMixer(avatarModel);
+                mixer.clipAction(gltf.animations[0]).play();
+            }
+        },
+        undefined,
+        (error) => {
+            console.error('Failed to load GLB avatar', error);
+        }
+    );
+
+    const handleResize = () => {
+        const { clientWidth, clientHeight } = canvas;
+        if (!clientWidth || !clientHeight) return;
+        camera.aspect = clientWidth / clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(clientWidth, clientHeight, false);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    const animate = () => {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+
+        if (mixer) mixer.update(delta);
+
+        if (avatarModel) {
+            const t = clock.elapsedTime;
+            avatarModel.rotation.y = Math.sin(t * 0.6) * 0.15;
+            const bob = isTalking ? 0.02 : 0.01;
+            avatarModel.position.y = Math.sin(t * (isTalking ? 6 : 2)) * bob;
+        }
+
+        renderer.render(scene, camera);
+    };
+
+    animate();
+}
 
 function loadVoices() {
     voices = synth.getVoices();
@@ -91,72 +187,7 @@ if (speechSynthesis.onvoiceschanged !== undefined) {
 // Generate a random session ID
 const sessionId = 'user_audio_' + Math.random().toString(36).substr(2, 9);
 
-// Mouth shapes map (pre-defined SVG paths or transforms)
-// Avataaars generally puts the mouth in a transform group. 
-// We will fetch 3 states on load.
-const mouthShapes = {
-    default: null,
-    smile: null
-};
-
-async function injectAvatarSVG() {
-    // Replace the image tag with actual SVG code to allow for finer transformation control
-    const img = document.getElementById('avatar-image');
-    if (img) {
-        try {
-            // 1. Fetch main avatar (default)
-            const response = await fetch(img.src);
-            const text = await response.text();
-            
-            // Create a temp container
-            const div = document.createElement('div');
-            div.innerHTML = text;
-            
-            const svg = div.querySelector('svg');
-            if (svg) {
-                svg.id = 'avatar-svg';
-                svg.style.width = '100%';
-                svg.style.height = '100%';
-                svg.style.filter = 'drop-shadow(0 20px 40px rgba(99, 102, 241, 0.2))';
-                
-                // Replace img with svg
-                img.replaceWith(svg);
-            }
-
-            // 2. Pre-fetch mouth shapes (Lazy load)
-            const baseUrl = 'https://api.dicebear.com/9.x/avataaars/svg';
-            // Ensure this matches the index.html src exactly to prevent jumping
-            const params = 'seed=Alexander&clothing=blazerAndShirt&accessories=prescription02&clothesColor=3c4f5c,65c9ff,262e33&accessoriesColor=262e33&top=shortWaved&eyes=default&hairColor=2c1b18&skinColor=edb98a';
-
-            const variations = [
-                { key: 'smile', url: `${baseUrl}?${params}&mouth=smile` },
-                { key: 'default', url: `${baseUrl}?${params}&mouth=default` }
-            ];
-
-            for (const v of variations) {
-                const r = await fetch(v.url);
-                const t = await r.text();
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = t;
-                // Identify the mouth group. In DiceBear Avataaars, it's usually inside a group <g transform="translate(X Y)"> 
-                // We will look for differences. 
-                // Actually, a simpler way is to cache the ENTIRE inner SVG structure of the mouth group if we can find it.
-                // But structure varies.
-                // Strategy: We will just swap the entire SVG for mouth sync. It's fast enough for simple loop.
-                mouthShapes[v.key] = t;
-            }
-            
-            // Verify we have defaults
-            if (!mouthShapes.default) mouthShapes.default = text;
-
-        } catch (e) {
-            console.error("Failed to inject SVG for animation", e);
-        }
-    }
-}
-
-// Call this on load
-injectAvatarSVG();
+initThreeAvatar();
 
 function speak(text, onTextUpdate) {
     if (synth.speaking) {
@@ -201,55 +232,11 @@ function speak(text, onTextUpdate) {
 }
 
 function startLipSync() {
-    if (talkInterval) clearInterval(talkInterval);
-    const svgContainer = document.getElementById('avatar-wrapper');
-    if (!svgContainer || !mouthShapes.default) return; // Wait for load
-
-    // Toggle states
-    
-    talkInterval = setInterval(() => {
-        if (!isTalking) {
-            stopLipSync();
-            return;
-        }
-        
-        // Randomly pick a mouth state for "flapping"
-        const r = Math.random();
-        let state = 'default';
-        if (r > 0.5) state = 'smile';
-        
-        // Naive SVG swap - fast enough for modern browsers
-        const currentSVG = document.getElementById('avatar-svg');
-        if (currentSVG && mouthShapes[state]) {
-             // We reuse the ID and styles to keep transition smooth
-             const styles = currentSVG.getAttribute('style');
-             
-             // Create temp to parse
-             const parser = new DOMParser();
-             const doc = parser.parseFromString(mouthShapes[state], 'image/svg+xml');
-             const newSVG = doc.documentElement;
-             
-             newSVG.id = 'avatar-svg';
-             newSVG.setAttribute('style', styles);
-             
-             currentSVG.replaceWith(newSVG);
-        }
-
-    }, 100); // 100ms flap speed
+    if (avatarHalo) avatarHalo.classList.add('active');
 }
 
 function stopLipSync() {
-    if (talkInterval) clearInterval(talkInterval);
-    const currentSVG = document.getElementById('avatar-svg');
-    if (currentSVG && mouthShapes.default) {
-         const styles = currentSVG.getAttribute('style');
-         const parser = new DOMParser();
-         const doc = parser.parseFromString(mouthShapes.default, 'image/svg+xml');
-         const newSVG = doc.documentElement;
-         newSVG.id = 'avatar-svg';
-         newSVG.setAttribute('style', styles);
-         currentSVG.replaceWith(newSVG);
-    }
+    if (avatarHalo) avatarHalo.classList.remove('active');
 }
 
 async function sendMessage() {
