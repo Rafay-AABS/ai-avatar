@@ -49,7 +49,7 @@ function initThreeAvatar() {
     scene = new THREE.Scene();
 
     camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    camera.position.set(0, 1.4, 2.4);
+    camera.position.set(0, 1.2, 1.8);
 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.2);
     scene.add(hemiLight);
@@ -76,14 +76,47 @@ function initThreeAvatar() {
             box.getCenter(center);
 
             avatarModel.position.sub(center);
+            avatarModel.position.y += 0.1; // Position avatar lower
 
             const maxDim = Math.max(size.x, size.y, size.z) || 1;
             const scale = 1.6 / maxDim;
             avatarModel.scale.setScalar(scale);
 
+            // Store bone references for animation
+            avatarModel.userData.leftArm = null;
+            avatarModel.userData.rightArm = null;
+            avatarModel.userData.leftHand = null;
+            avatarModel.userData.rightHand = null;
+
+            avatarModel.traverse((node) => {
+                if (node.isMesh) {
+                    // Enable morph targets for lipsync
+                    if (node.morphTargetDictionary && node.morphTargetInfluences) {
+                        node.userData.morphTargets = node.morphTargetDictionary;
+                    }
+                }
+                // Store arm and hand bones for animation
+                if (node.isBone || node.type === 'Bone') {
+                    const name = node.name.toLowerCase();
+                    if (name.includes('leftarm') || name.includes('l_arm') || name.includes('leftupperarm')) {
+                        avatarModel.userData.leftArm = node;
+                    }
+                    if (name.includes('rightarm') || name.includes('r_arm') || name.includes('rightupperarm')) {
+                        avatarModel.userData.rightArm = node;
+                    }
+                    if (name.includes('lefthand') || name.includes('l_hand')) {
+                        avatarModel.userData.leftHand = node;
+                    }
+                    if (name.includes('righthand') || name.includes('r_hand')) {
+                        avatarModel.userData.rightHand = node;
+                    }
+                }
+            });
+
             if (gltf.animations && gltf.animations.length > 0) {
                 mixer = new THREE.AnimationMixer(avatarModel);
-                mixer.clipAction(gltf.animations[0]).play();
+                const action = mixer.clipAction(gltf.animations[0]);
+                action.play();
             }
         },
         undefined,
@@ -113,7 +146,75 @@ function initThreeAvatar() {
             const t = clock.elapsedTime;
             avatarModel.rotation.y = Math.sin(t * 0.6) * 0.15;
             const bob = isTalking ? 0.02 : 0.01;
-            avatarModel.position.y = Math.sin(t * (isTalking ? 6 : 2)) * bob;
+            const baseY = 0.1; // Keep avatar positioned lower
+            avatarModel.position.y = baseY + Math.sin(t * (isTalking ? 6 : 2)) * bob;
+            
+            // Animate hands when talking
+            if (isTalking) {
+                if (avatarModel.userData.leftArm) {
+                    avatarModel.userData.leftArm.rotation.z = Math.sin(t * 2) * 0.15;
+                    avatarModel.userData.leftArm.rotation.x = Math.sin(t * 2.5) * 0.1 + 0.3;
+                }
+                if (avatarModel.userData.rightArm) {
+                    avatarModel.userData.rightArm.rotation.z = Math.sin(t * 2.2) * 0.15;
+                    avatarModel.userData.rightArm.rotation.x = Math.cos(t * 2.3) * 0.1 + 0.3;
+                }
+                if (avatarModel.userData.leftHand) {
+                    avatarModel.userData.leftHand.rotation.z = Math.sin(t * 3) * 0.1;
+                }
+                if (avatarModel.userData.rightHand) {
+                    avatarModel.userData.rightHand.rotation.z = Math.cos(t * 3) * 0.1;
+                }
+            } else {
+                // Reset arms to low resting position when not talking
+                if (avatarModel.userData.leftArm) {
+                    avatarModel.userData.leftArm.rotation.z = THREE.MathUtils.lerp(avatarModel.userData.leftArm.rotation.z, 0, 0.1);
+                    avatarModel.userData.leftArm.rotation.x = THREE.MathUtils.lerp(avatarModel.userData.leftArm.rotation.x, 0.3, 0.1);
+                }
+                if (avatarModel.userData.rightArm) {
+                    avatarModel.userData.rightArm.rotation.z = THREE.MathUtils.lerp(avatarModel.userData.rightArm.rotation.z, 0, 0.1);
+                    avatarModel.userData.rightArm.rotation.x = THREE.MathUtils.lerp(avatarModel.userData.rightArm.rotation.x, 0.3, 0.1);
+                }
+                if (avatarModel.userData.leftHand) {
+                    avatarModel.userData.leftHand.rotation.z = THREE.MathUtils.lerp(avatarModel.userData.leftHand.rotation.z, 0, 0.1);
+                }
+                if (avatarModel.userData.rightHand) {
+                    avatarModel.userData.rightHand.rotation.z = THREE.MathUtils.lerp(avatarModel.userData.rightHand.rotation.z, 0, 0.1);
+                }
+            }
+            
+            // Apply morph target lipsync
+            if (isTalking) {
+                avatarModel.traverse((node) => {
+                    if (node.isMesh && node.morphTargetInfluences) {
+                        const morphDict = node.userData.morphTargets;
+                        if (morphDict) {
+                            // Animate mouth movements for lipsync
+                            const lipValue = Math.abs(Math.sin(t * 12)) * 0.7;
+                            
+                            // Try common morph target names
+                            if ('mouthOpen' in morphDict) {
+                                node.morphTargetInfluences[morphDict['mouthOpen']] = lipValue;
+                            }
+                            if ('jawOpen' in morphDict) {
+                                node.morphTargetInfluences[morphDict['jawOpen']] = lipValue * 0.8;
+                            }
+                            if ('viseme_aa' in morphDict) {
+                                node.morphTargetInfluences[morphDict['viseme_aa']] = lipValue;
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Reset morph targets when not talking
+                avatarModel.traverse((node) => {
+                    if (node.isMesh && node.morphTargetInfluences) {
+                        for (let i = 0; i < node.morphTargetInfluences.length; i++) {
+                            node.morphTargetInfluences[i] = 0;
+                        }
+                    }
+                });
+            }
         }
 
         renderer.render(scene, camera);
