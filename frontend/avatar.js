@@ -64,7 +64,7 @@ function initThreeAvatar() {
 
     const loader = new GLTFLoader();
     loader.load(
-        './696ce12c29115399d7fe8f2f.glb',
+        './avatar.glb',
         (gltf) => {
             avatarModel = gltf.scene;
             scene.add(avatarModel);
