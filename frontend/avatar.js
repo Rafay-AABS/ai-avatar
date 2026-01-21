@@ -93,6 +93,27 @@ function initThreeAvatar() {
                     // Enable morph targets for lipsync
                     if (node.morphTargetDictionary && node.morphTargetInfluences) {
                         node.userData.morphTargets = node.morphTargetDictionary;
+                        
+                        // Pre-calculate indices for better performance and fuzzy matching
+                        const blinkIndices = [];
+                        const mouthIndices = [];
+                        
+                        Object.entries(node.morphTargetDictionary).forEach(([key, index]) => {
+                            const k = key.toLowerCase();
+                            
+                            // Blink Detection
+                            if (k.includes('blink') || k.includes('eyeclose') || k.includes('eyesclosed')) {
+                                blinkIndices.push(index);
+                            }
+                            
+                            // Mouth Detection
+                            if (k.includes('mouthopen') || k.includes('jawopen') || k.includes('viseme_aa')) {
+                                mouthIndices.push({ index, name: k }); 
+                            }
+                        });
+                        
+                        node.userData.blinkIndices = blinkIndices;
+                        node.userData.mouthIndices = mouthIndices;
                     }
                 }
                 // Store arm and hand bones for animation
@@ -210,26 +231,36 @@ function initThreeAvatar() {
             
             // Unified Morph Target Animation (Lipsync + Blinking)
             avatarModel.traverse((node) => {
-                if (node.isMesh && node.morphTargetInfluences) {
-                    const morphDict = node.userData.morphTargets;
-                    if (morphDict) {
-                        // 1. Reset all morphs first to avoid stuck states
-                        for (let i = 0; i < node.morphTargetInfluences.length; i++) {
-                            node.morphTargetInfluences[i] = 0;
-                        }
+                if (node.isMesh && node.morphTargetInfluences && node.userData.blinkIndices) {
+                    
+                    // 1. Reset specific morphs (Optimization: Don't reset everything, just what we touch)
+                    // Actually, resetting what we touch is cleaner.
+                    
+                    const blinkIndices = node.userData.blinkIndices;
+                    const mouthIndices = node.userData.mouthIndices;
 
-                        // 2. Apply Blink
-                        if ('eyesClosed' in morphDict) node.morphTargetInfluences[morphDict['eyesClosed']] = blinkValue;
-                        if ('blink' in morphDict) node.morphTargetInfluences[morphDict['blink']] = blinkValue;
-                        if ('eyeBlink_L' in morphDict) node.morphTargetInfluences[morphDict['eyeBlink_L']] = blinkValue;
-                        if ('eyeBlink_R' in morphDict) node.morphTargetInfluences[morphDict['eyeBlink_R']] = blinkValue;
+                    // Apply Blink
+                    blinkIndices.forEach(idx => {
+                        node.morphTargetInfluences[idx] = blinkValue;
+                    });
 
-                        // 3. Apply Lipsync (only if talking)
+                    // Apply Lipsync
+                    if (mouthIndices) {
+                         // Reset mouth first
+                        mouthIndices.forEach(item => {
+                             node.morphTargetInfluences[item.index] = 0;
+                        });
+
                         if (isTalking) {
                             const lipValue = Math.abs(Math.sin(t * 8)) * 0.7;
-                            if ('mouthOpen' in morphDict) node.morphTargetInfluences[morphDict['mouthOpen']] = lipValue;
-                            if ('jawOpen' in morphDict) node.morphTargetInfluences[morphDict['jawOpen']] = lipValue * 0.8;
-                            if ('viseme_aa' in morphDict) node.morphTargetInfluences[morphDict['viseme_aa']] = lipValue;
+                            mouthIndices.forEach(item => {
+                                // Simple weight logic
+                                if (item.name.includes('jawopen')) {
+                                    node.morphTargetInfluences[item.index] = lipValue * 0.8;
+                                } else {
+                                    node.morphTargetInfluences[item.index] = lipValue;
+                                }
+                            });
                         }
                     }
                 }

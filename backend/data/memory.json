@@ -388,5 +388,15 @@
             "role": "ai",
             "content": "Hello there! It's nice to meet you. How can I assist you today?"
         }
+    ],
+    "user_audio_m9blvj7as": [
+        {
+            "role": "user",
+            "content": "hello"
+        },
+        {
+            "role": "ai",
+            "content": "Hello there. It's nice to meet you. Is there something I can help you with or would you like to chat?"
+        }
     ]
 }
