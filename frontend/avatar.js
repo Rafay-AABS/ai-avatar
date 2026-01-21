@@ -49,7 +49,7 @@ function initThreeAvatar() {
     scene = new THREE.Scene();
 
     camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    camera.position.set(0, 1.2, 1.8);
+    camera.position.set(0, 1.55, 0.65);
 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 1.2);
     scene.add(hemiLight);
@@ -190,7 +190,7 @@ function initThreeAvatar() {
                         const morphDict = node.userData.morphTargets;
                         if (morphDict) {
                             // Animate mouth movements for lipsync
-                            const lipValue = Math.abs(Math.sin(t * 12)) * 0.7;
+                            const lipValue = Math.abs(Math.sin(t * 8)) * 0.7;
                             
                             // Try common morph target names
                             if ('mouthOpen' in morphDict) {
