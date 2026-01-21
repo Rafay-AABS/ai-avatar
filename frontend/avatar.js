@@ -144,10 +144,9 @@ function initThreeAvatar() {
 
         if (avatarModel) {
             const t = clock.elapsedTime;
-            avatarModel.rotation.y = Math.sin(t * 0.6) * 0.15;
-            const bob = isTalking ? 0.02 : 0.01;
+            avatarModel.rotation.y = 0; // Keep rotation still
             const baseY = 0.1; // Keep avatar positioned lower
-            avatarModel.position.y = baseY + Math.sin(t * (isTalking ? 6 : 2)) * bob;
+            avatarModel.position.y = baseY; // Remove bobbing animation
             
             // Animate hands when talking
             if (isTalking) {
